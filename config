@@ -1,0 +1,25 @@
+# CONFIGURATION FILE
+
+# [APPLICATION]
+
+# program name
+#app.name =
+# name of the jar file (suffix optional)
+#app.jar.name =
+# program version
+#app.version =
+# program version name
+#app.version.name =
+
+# [MODULES]
+
+#modules = Module1:dir/Module2
+
+# [Log]
+
+#log.file.path = log/log
+
+# [Flags]
+
+# set application log
+#flag.lock
