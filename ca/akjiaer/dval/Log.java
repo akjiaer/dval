@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Stefan Neubert <akjiaer@gmail.com>
+ * Copyright (c) 2011, Stefan Neubert <akjiaer@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 
 /**
  * @author Stefan Neubert
- * @version 1.1.1 2011-04-14
+ * @version 1.1.2 2011-04-14
  * @since 0.10.0
  */
 public class Log {
@@ -149,9 +149,9 @@ public class Log {
     }
 
     private void openFileWriter(File logFile) {
-        final File parent = logFile.getParentFile();
         try {
-            if(!parent.exists() && !parent.mkdirs()){
+            final File parent = logFile.getParentFile();
+            if(parent != null && !parent.exists() && !parent.mkdirs()){
                 Log.error(Log.class, "Cannot create log file directories!");
             }
             file = new FileWriter(logFile);

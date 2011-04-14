@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Stefan Neubert <akjiaer@gmail.com>
+ * Copyright (c) 2011, Stefan Neubert <akjiaer@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ import java.io.InputStream;
 
 /**
  * @author Stefan Neubert
- * @version 1.0 2011-04-14
- * @since 0.11.0
+ * @version 3.1.2 2011-04-14
+ * @since 0.10.0
  */
 public class Config extends StringMap {
 
@@ -44,8 +44,6 @@ public class Config extends StringMap {
     public final static String MODE_DEBUG = "mode.debug";
     public final static String MODE_EXPERIMENTAL = "mode.experimental";
     public final static String MODE_UPDATE = "mode.update";
-
-    public final static String FLAG_LOCK = "flag.lock";
 
     public final static Config sys = new Config();
 

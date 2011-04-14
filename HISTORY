@@ -1,12 +1,16 @@
-## 0.11.0 (Grevyi) ##
----------------------
+== 0.11.0 (Grevyi) ==
 
-- added command line parser *
-- added update ability *
-- enhanced module control *
-- removed config file using *
+''2011-??-??''
 
-## 0.10.0 (Kiang) ##
---------------------
+* added command line parser *
+* added update ability *
+* enhanced module control *
+* extended logging *
+* removed config file using
 
-- first release
+
+== 0.10.0 (Kiang) ==
+
+''2011-04-07''
+
+* first release

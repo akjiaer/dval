@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Stefan Neubert <akjiaer@gmail.com>
+ * Copyright (c) 2011, Stefan Neubert <akjiaer@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,50 +29,61 @@ import java.util.jar.Manifest;
 
 /**
  * @author Stefan Neubert
- * @version 1.0.1 2011-03-13
+ * @version 1.1 2011-04-14
  * @since 0.10.0
  */
 public class ModuleLoader {
-    
-    private final static int MAGIC_JAR = 0x504B0304;
-    
-    public ModuleLoader() {}
 
-    public void load(final String[] filenames) {
-        for (String s : filenames) {
-            load(s);
+    private final static int MAGIC_JAR = 0x504B0304;
+
+    public static void load(final String... filePaths) {
+        final File[] files = new File[filePaths.length];
+        for (int i = 0; i < filePaths.length; i++) {
+            files[i] = new File(filePaths[i]);
         }
+        new ModuleLoader(files);
     }
-    
-    public boolean load(final String filename) {
-        Log.debug(ModuleLoader.class, "Load module file '" + filename + "' ... ");
-        final Module m = get(new File(filename));
-        if (m != null) {
-            if (Module.modules.containsKey(m.name)) {
-                Log.error(ModuleLoader.class, "Cannot load module '" +
-                          m.name + "'! Already loaded!");
-            } else {
-                if (m.load()) {
-                    if (Config.sys.is(Config.MODE_DEBUG)) {
-                        StringBuilder sb = new StringBuilder();
-                        sb.append("Module '");
-                        sb.append(m.name);
-                        sb.append("' ");
-                        if (m.version != null) {
-                            sb.append('(');
-                            sb.append(m.version);
-                            sb.append(") ");
+
+ /* ----------------------------- ModuleLoader ----------------------------- */
+
+    private ModuleLoader(final File... files) {
+        Module m;
+        int count = 0;
+        for (File f : files) {
+            if ((m = get(f)) != null) {
+                if (Module.modules.containsKey(m.name)) {
+                    Log.error(ModuleLoader.class, "Cannot load module '" +
+                              m.name + "'! Already loaded!");
+                } else {
+                    if (m.load()) {
+                        if (Config.sys.is(Config.MODE_DEBUG)) {
+                            StringBuilder sb = new StringBuilder();
+                            sb.append("Module '");
+                            sb.append(m.name);
+                            sb.append("' ");
+                            if (m.version != null) {
+                                sb.append('(');
+                                sb.append(m.version);
+                                sb.append(") ");
+                            }
+                            sb.append("loaded.");
+                            Log.debug(ModuleLoader.class, sb.toString());
                         }
-                        sb.append("loaded.");
-                        Log.debug(ModuleLoader.class, sb.toString());
+                        Module.modules.put(m.name, m);
+                        m.open();
+                        count++;
                     }
-                    Module.modules.put(m.name, m);
-                    m.open();
-                    return true;
                 }
             }
         }
-        return false;
+        if (count < files.length - 1) {
+            if (count == 0) {
+                Log.fatal(ModuleLoader.class, "No module found! Cannot do anything!");
+                System.exit(1);
+            } else {
+                Log.warn(ModuleLoader.class, "Some modules not found!");
+            }
+        }
     }
 
     private Module get(final File source) {

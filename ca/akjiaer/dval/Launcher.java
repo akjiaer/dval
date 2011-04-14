@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Stefan Neubert <akjiaer@gmail.com>
+ * Copyright (c) 2011, Stefan Neubert <akjiaer@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,22 +20,22 @@ import ca.akjiaer.dval.util.Config;
 import ca.akjiaer.dval.util.Version;
 import java.util.regex.Pattern;
 import ca.akjiaer.dval.mod.ModuleLoader;
+import ca.akjiaer.dval.util.Manifest;
+import ca.akjiaer.dval.util.StringMap;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.jar.Attributes;
 import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 
 /**
  * @author Stefan Neubert
- * @version 0.3.6 2011-04-14
+ * @version 0.3.7 2011-04-14
  * @since 0.10.0
  */
 public class Launcher {
 
     private final static String NAME = "Dval Application Manager";
-    private final static Version VERSION = new Version("0.11.0-101", "Grevyi Alpha");
+    private final static Version VERSION = new Version("0.11.0-102", "Grevyi Alpha");
 
     public static void main(String[] args) {
         Thread.currentThread().setName("Launcher");
@@ -44,16 +44,12 @@ public class Launcher {
         ExitHook.init();
 
         /* Configuration */
-        Attributes attr = null;
+        StringMap values = null;
         try {
-            final File f = new File(Launcher.class.getProtectionDomain()
-                                    .getCodeSource().getLocation().toURI());
-            Config.sys.put(Config.APP_JAR_NAME, f.getName());
-            final Manifest man = new JarFile(f).getManifest();
-            if (man == null) {
-                throw new NullPointerException();
-            }
-            attr = man.getMainAttributes();
+            final File file = new File(Launcher.class.getProtectionDomain()
+                                       .getCodeSource().getLocation().toURI());
+            Config.sys.put(Config.APP_JAR_NAME, file.getName());
+            values =  Manifest.extract(file).getValues();
         } catch (Exception ex) {
             Log.setLogFile("log");
             Log.fatal(Launcher.class, "Cannot load! Manifest not found!", ex);
@@ -63,7 +59,7 @@ public class Launcher {
         String s;
 
         /* Logging */
-        if (attr.containsKey("App-Log-File") && !(s = attr.getValue("App-Log-File")).isEmpty()) {
+        if ((s = values.get("App-Log-File")) != null && !s.isEmpty()) {
             Log.setLogFile(s);
         }
 
@@ -71,21 +67,14 @@ public class Launcher {
         parseArgs(args);
 
         /* APP Name */
-        if (attr.containsKey("App-Name") && !(s = attr.getValue("App-Name")).isEmpty()) {
-            Config.sys.put(Config.APP_NAME, s);
-        } else {
+        if ((s = values.get("App-Name")) == null || s.isEmpty()) {
             Config.sys.put(Config.APP_NAME, "Unknown");
+        } else {
+            Config.sys.put(Config.APP_NAME, s);
         }
 
         /* APP Path */
         Config.sys.put(Config.APP_PATH, System.getProperty("user.dir"));
-
-        /* Lock */
-        if (attr.containsKey("App-Lock")) {
-            System.out.println("HERO");
-            Config.sys.set(Config.FLAG_LOCK, true);
-            AppLock.lock();
-        }
 
         /* Information */
         if (Config.sys.is(Config.MODE_DEBUG)) {
@@ -103,17 +92,20 @@ public class Launcher {
             sb.append(Config.sys.is(Config.MODE_EXPERIMENTAL) ? "enabled." : "disabled.");
             sb.append("\n - Update-Mode is ");
             sb.append(Config.sys.is(Config.MODE_UPDATE) ? "enabled." : "disabled.");
-            sb.append("\n - Application is ");
-            sb.append(AppLock.isLocked() ? "locked." : "not locked.");
             Log.debug(null, sb.toString());
+        }
+
+        /* Lock */
+        if (values.contains("App-Lock")) {
+            AppLock.lock();
         }
         
         /* Modules */
-        if ((s = attr.getValue("App-Modules")) == null || s.isEmpty()) {
+        if ((s = values.get("App-Modules")) == null || s.isEmpty()) {
             Log.error(Launcher.class, "No entry for module loading found!");
             System.exit(1);
         } else {
-            new ModuleLoader().load(Pattern.compile(":").split(s, 0));
+            ModuleLoader.load(Pattern.compile(":").split(s, 0));
         }
     }
 
