@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 
 /**
  * @author Stefan Neubert
- * @version 1.1 2011-03-24
+ * @version 1.1.1 2011-04-14
  * @since 0.10.0
  */
 public class Log {
@@ -141,7 +141,7 @@ public class Log {
     private Log() {
         formatter = new SimpleDateFormat("'['yyyy-MM-dd HH:mm:ss'] '");
         breakLine = System.getProperty("line.separator");
-        newLine = breakLine + "                                 ";
+        newLine = breakLine + "                                ";
         date = new Date();
 
         FileOutputStream fos = new FileOutputStream(FileDescriptor.err);

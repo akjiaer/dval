@@ -16,21 +16,26 @@
 
 package ca.akjiaer.dval;
 
+import ca.akjiaer.dval.util.Config;
 import ca.akjiaer.dval.util.Version;
 import java.util.regex.Pattern;
 import ca.akjiaer.dval.mod.ModuleLoader;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 /**
  * @author Stefan Neubert
- * @version 0.3.5 2011-04-06
+ * @version 0.3.6 2011-04-14
  * @since 0.10.0
  */
 public class Launcher {
 
     private final static String NAME = "Dval Application Manager";
-    private final static Version VERSION = new Version("0.10.0-100", "Kiang");
+    private final static Version VERSION = new Version("0.11.0-101", "Grevyi Alpha");
 
     public static void main(String[] args) {
         Thread.currentThread().setName("Launcher");
@@ -39,15 +44,26 @@ public class Launcher {
         ExitHook.init();
 
         /* Configuration */
-        if (!Config.sys.load(ClassLoader.getSystemResourceAsStream("config"))) {
-            Log.fatal(Launcher.class, "Cannot load system config!");
+        Attributes attr = null;
+        try {
+            final File f = new File(Launcher.class.getProtectionDomain()
+                                    .getCodeSource().getLocation().toURI());
+            Config.sys.put(Config.APP_JAR_NAME, f.getName());
+            final Manifest man = new JarFile(f).getManifest();
+            if (man == null) {
+                throw new NullPointerException();
+            }
+            attr = man.getMainAttributes();
+        } catch (Exception ex) {
+            Log.setLogFile("log");
+            Log.fatal(Launcher.class, "Cannot load! Manifest not found!", ex);
             System.exit(1);
         }
 
         String s;
 
         /* Logging */
-        if ((s = Config.sys.get(Config.LOG_FILE_PATH)) != null && !s.isEmpty()) {
+        if (attr.containsKey("App-Log-File") && !(s = attr.getValue("App-Log-File")).isEmpty()) {
             Log.setLogFile(s);
         }
 
@@ -55,33 +71,26 @@ public class Launcher {
         parseArgs(args);
 
         /* APP Name */
-        if ((s = Config.sys.get(Config.APP_NAME)) == null || s.isEmpty()) {
+        if (attr.containsKey("App-Name") && !(s = attr.getValue("App-Name")).isEmpty()) {
+            Config.sys.put(Config.APP_NAME, s);
+        } else {
             Config.sys.put(Config.APP_NAME, "Unknown");
         }
 
         /* APP Path */
         Config.sys.put(Config.APP_PATH, System.getProperty("user.dir"));
 
-        /* JAR Name */
-        if ((s = Config.sys.get(Config.APP_JAR_NAME)) == null || s.isEmpty()) {
-            Config.sys.put(Config.APP_JAR_NAME, Config.sys.get(Config.APP_NAME) + ".jar");
-        } else {
-            if (!s.endsWith(".jar")) {
-                Config.sys.put(Config.APP_JAR_NAME, s + ".jar");
-            }
+        /* Lock */
+        if (attr.containsKey("App-Lock")) {
+            System.out.println("HERO");
+            Config.sys.set(Config.FLAG_LOCK, true);
+            AppLock.lock();
         }
-        
+
         /* Information */
         if (Config.sys.is(Config.MODE_DEBUG)) {
             StringBuilder sb = new StringBuilder();
-            sb.append(" App:      ").append(Config.sys.get(Config.APP_NAME));
-            if ((s = Config.sys.get(Config.APP_VERSION)) != null && !s.isEmpty()) {
-                sb.append(" (Version ").append(s);
-                if ((s = Config.sys.get(Config.APP_VERSION_NAME)) != null && !s.isEmpty()) {
-                    sb.append(", \"").append(s).append("\"");
-                }
-                sb.append(")");
-            }
+            sb.append("App:      ").append(Config.sys.get(Config.APP_NAME));
             sb.append("\nLauncher: ").append(NAME).append(" (Version ")
               .append(VERSION).append(", \"").append(VERSION.name).append("\")");
             sb.append("\nSystem:   ").append(System.getProperty("os.name"))
@@ -94,18 +103,13 @@ public class Launcher {
             sb.append(Config.sys.is(Config.MODE_EXPERIMENTAL) ? "enabled." : "disabled.");
             sb.append("\n - Update-Mode is ");
             sb.append(Config.sys.is(Config.MODE_UPDATE) ? "enabled." : "disabled.");
-            sb.append("\n - Locking-Flag is ");
-            sb.append(Config.sys.is(Config.FLAG_LOCK) ? "set." : "not set.");
+            sb.append("\n - Application is ");
+            sb.append(AppLock.isLocked() ? "locked." : "not locked.");
             Log.debug(null, sb.toString());
-        }
-
-        /* Lock */
-        if (Config.sys.is(Config.FLAG_LOCK)) {
-            AppLock.lock();
         }
         
         /* Modules */
-        if ((s = Config.sys.get("modules")) == null || s.isEmpty()) {
+        if ((s = attr.getValue("App-Modules")) == null || s.isEmpty()) {
             Log.error(Launcher.class, "No entry for module loading found!");
             System.exit(1);
         } else {

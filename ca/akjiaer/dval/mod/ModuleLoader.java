@@ -16,7 +16,7 @@
 
 package ca.akjiaer.dval.mod;
 
-import ca.akjiaer.dval.Config;
+import ca.akjiaer.dval.util.Config;
 import ca.akjiaer.dval.Log;
 import ca.akjiaer.dval.util.Version;
 import java.io.File;
@@ -85,7 +85,7 @@ public class ModuleLoader {
             switch (raf.readInt()) { // 4
                 case MAGIC_JAR: return getJarModule(source);
                 default: Log.error(ModuleLoader.class, "Module '" + source.getName() +
-                                   "' have an unknown / unsupported file format!");
+                                   "' have an unknown or unsupported file format!");
             }
         } catch (FileNotFoundException ex) {
             Log.debug(ModuleLoader.class, "File '" + source.getName() + "' not found!");

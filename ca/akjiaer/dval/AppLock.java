@@ -16,6 +16,7 @@
 
 package ca.akjiaer.dval;
 
+import ca.akjiaer.dval.util.Config;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;

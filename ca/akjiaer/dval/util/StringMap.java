@@ -23,7 +23,7 @@ import java.util.Properties;
 
 /**
  * @author Stefan Neubert
- * @version 1.0.2 2011-04-07
+ * @version 1.1 2011-04-14
  * @since 0.10.0
  */
 public class StringMap implements Iterable<StringMap.Entry> {
@@ -49,6 +49,22 @@ public class StringMap implements Iterable<StringMap.Entry> {
         table = new Entry[16];
         loadFactor = 0.75f;
         threshold = (int) (16 * 0.75f);
+    }
+
+    private void assureSize(final int keyCount) {
+        if (keyCount > threshold) {
+            int targetCapacity = (int) (keyCount / loadFactor + 1);
+            if (targetCapacity > MAXIMUM_CAPACITY) {
+                targetCapacity = MAXIMUM_CAPACITY;
+            }
+            int newCapacity = table.length;
+            while (newCapacity < targetCapacity) {
+               newCapacity <<= 1;
+            }
+            if (newCapacity > table.length) {
+               resize(newCapacity);
+            }
+        }
     }
 
     public void clear() {
@@ -109,60 +125,37 @@ public class StringMap implements Iterable<StringMap.Entry> {
         }
     }
 
-    public void putAll(final Properties p) {
-        final int keyCount = p.size();
-        if (keyCount == 0) {
-            return;
-        }
-        if (keyCount > threshold) {
-            int targetCapacity = (int) (keyCount / loadFactor + 1);
-            if (targetCapacity > MAXIMUM_CAPACITY) {
-                targetCapacity = MAXIMUM_CAPACITY;
-            }
-            int newCapacity = table.length;
-            while (newCapacity < targetCapacity) {
-               newCapacity <<= 1;
-            }
-            if (newCapacity > table.length) {
-               resize(newCapacity);
-            }
-        }
+    public void putAll(final Map<String, String> map) {
+        if (map.isEmpty()) return;
+        assureSize(map.size());
 
-        Object ok, ov;
-        Map.Entry<Object, Object> e;
-        for (Iterator<Map.Entry<Object, Object>> i = p.entrySet().iterator(); i.hasNext();) {
-            if ((ok = (e = i.next()).getKey()) instanceof String &&
-                (ov = e.getValue()) instanceof String) {
+        String k;
+        for (Map.Entry<String, String> e : map.entrySet()) {
+            if ((k = e.getKey()) != null) {
+                put(k, e.getValue());
+            }
+        }
+    }
+
+    public void putAll(final Properties p) {
+        if (p.isEmpty()) return;
+        assureSize(p.size());
+
+        Object ok, ov = null;
+        for (Map.Entry<Object, Object> e : p.entrySet()) {
+            if ((ok = e.getKey()) instanceof String &&
+                (ov = e.getValue()) instanceof String || ov == null) {
                 put((String) ok, (String) ov);
             }
         }
     }
 
-    public void putAll(final Map<String, String> map) {
-        int keyCount = map.size();
-        if (keyCount == 0) {
-            return;
-        }
-        if (keyCount > threshold) {
-            int targetCapacity = (int) (keyCount / loadFactor + 1);
-            if (targetCapacity > MAXIMUM_CAPACITY) {
-                targetCapacity = MAXIMUM_CAPACITY;
-            }
-            int newCapacity = table.length;
-            while (newCapacity < targetCapacity) {
-               newCapacity <<= 1;
-            }
-            if (newCapacity > table.length) {
-               resize(newCapacity);
-            }
-        }
+    public void putAll(final StringMap sm) {
+        if (sm.isEmpty()) return;
+        assureSize(sm.size());
 
-        String k;
-        Map.Entry<String, String> e;
-        for (Iterator<Map.Entry<String, String>> i = map.entrySet().iterator(); i.hasNext();) {
-            if ((k = (e = i.next()).getKey()) != null) {
-                put(k, e.getValue());
-            }
+        for (StringMap.Entry e : sm) {
+            put(e.key, e.value);
         }
     }
 

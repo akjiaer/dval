@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-package ca.akjiaer.dval.util;
+package ca.akjiaer.dval.util.txt;
 
 import ca.akjiaer.dval.Log;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -29,27 +32,30 @@ import java.util.NoSuchElementException;
 
 /**
  * @author Stefan Neubert
- * @version 1.0.1 2011-04-07
- * @since 0.10.0
+ * @version 1.0 2011-04-14
+ * @since 0.11.0
  */
-public class LineReader implements Iterable<String>, Iterator<String> {
-
-    public static final int SKIP_IF_AT_START = 0;
-    public static final int SKIP_IF_AT_END = 1;
-    public static final int SKIP_IF_CONTAINS = 2;
-    public static final int SKIP_IF_EQUALS = 3;
-    public static final int SKIP_IF_EQUALS_IGNORE_CASE = 4;
+public class LineReader<V> implements Iterable<V>, Iterator<V> {
 
     private final BufferedReader reader;
-    private final List<Skipper> skipper;
+    private final List<LineSkipper> skipper;
     private final boolean empty;
+    private final LineParser<V> parser;
     private String next;
 
-    public LineReader(final InputStream is) {
-        this(is, Charset.forName("UTF-8"));
+    public LineReader(final LineParser<V> parser, final File file) throws FileNotFoundException{
+        this(parser, new FileInputStream(file), Charset.forName("UTF-8"));
     }
 
-    public LineReader(final InputStream is, final Charset cs) {
+    public LineReader(final LineParser<V> parser, final InputStream is) {
+        this(parser, is, Charset.forName("UTF-8"));
+    }
+
+    private LineReader(final LineParser<V> parser, final InputStream is, final Charset cs) {
+        if (parser == null) {
+            throw new IllegalArgumentException("Parser cannot be null!");
+        }
+        this.parser = parser;
         this.reader = new BufferedReader(new InputStreamReader(is, cs));
         this.skipper = new ArrayList(5);
         getNext();
@@ -60,12 +66,12 @@ public class LineReader implements Iterable<String>, Iterator<String> {
         if (match == null) {
             throw new IllegalArgumentException("Match string cannot be null!");
         }
-        skipper.add(new Skipper(match, condition));
+        skipper.add(new LineSkipper(match, condition));
     }
 
     private void getNext() {
         try {
-            while((next = reader.readLine()) == null || next.isEmpty() || skip(next)) {}
+            while((next = reader.readLine()) != null && (next.isEmpty() || skip(next))) {}
         } catch (IOException ex) {
             Log.error(LineReader.class, "Cannot read line!", ex);
             next = null;
@@ -82,22 +88,22 @@ public class LineReader implements Iterable<String>, Iterator<String> {
     }
 
     @Override
-    public Iterator<String> iterator() {
+    public Iterator<V> iterator() {
         return this;
     }
 
     @Override
-    public String next() {
+    public V next() {
         if (next == null) {
             throw new NoSuchElementException();
         }
         String current = next;
         getNext();
-        return current;
+        return parser.parse(current);
     }
 
     private boolean skip(final String line) {
-        for(Skipper sk : skipper) {
+        for(LineSkipper sk : skipper) {
             if (sk.skip(line)) return true;
         }
         return false;
@@ -106,29 +112,6 @@ public class LineReader implements Iterable<String>, Iterator<String> {
     @Override
     public void remove() {
         getNext();
-    }
-
-    private class Skipper {
-
-        private final int condition;
-        private final String match;
-
-        public Skipper(final String match, final int condition) {
-            this.condition = condition;
-            this.match = match;
-        }
-
-        public boolean skip(String line) {
-            switch (condition) {
-                case SKIP_IF_AT_START:           return line.startsWith(match);
-                case SKIP_IF_CONTAINS:           return line.contains(match);
-                case SKIP_IF_AT_END:             return line.endsWith(match);
-                case SKIP_IF_EQUALS:             return line.equals(match);
-                case SKIP_IF_EQUALS_IGNORE_CASE: return line.equalsIgnoreCase(match);
-                default: return false;
-            }
-        }
-
     }
 
 }

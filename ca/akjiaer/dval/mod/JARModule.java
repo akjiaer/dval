@@ -29,7 +29,7 @@ import java.io.InputStream;
 
 /**
  * @author Stefan Neubert
- * @version 1.0.1 2011-03-14
+ * @version 1.0.2 2011-04-14
  * @since 0.10.0
  */
 public class JARModule extends Module {
@@ -39,15 +39,16 @@ public class JARModule extends Module {
         super(name, version, author, mainclass, source);
     }
 
+    @Override
     protected boolean load() {
         try {
-            ZipFile zfile = new ZipFile(source, ZipFile.OPEN_READ);
-            Enumeration eze = zfile.entries();
+            final ZipFile zfile = new ZipFile(source, ZipFile.OPEN_READ);
+            final Enumeration<ZipEntry> eze = (Enumeration<ZipEntry>) zfile.entries();
             String s = null;
             ZipEntry ze = null;
             JARModuleEntry je = null;
             while (eze.hasMoreElements()) {
-                ze = (ZipEntry) eze.nextElement();
+                ze = eze.nextElement();
                 if (!(s = ze.getName()).endsWith("/") && !s.startsWith("META-INF")) {
                     je = new JARModuleEntry(zfile, ze);
                     if (s.endsWith(".class")) {
@@ -78,16 +79,13 @@ public class JARModule extends Module {
             this.entry  = entry;
         }
 
+        @Override
         protected byte[] read() {
             InputStream in = null;
             try {
+                final ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 in = source.getInputStream(entry);
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                int next = in.read();
-                while (next > -1) {
-                    bos.write(next);
-                    next = in.read();
-                }
+                for (int next; (next = in.read()) > -1; bos.write(next)) {}
                 bos.flush();
                 return bos.toByteArray();
             } catch (IOException ex) {

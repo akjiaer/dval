@@ -1,3 +1,21 @@
 ## Dval ##
 
-Dval (Dvalarr) is a simple launcher for modular Java applications. It provide some helpful base features like a very simple log system and application locking.
+Dval (short form of Dvalarr) is a basement for modular java applications. It provides module managment and other helpful features and utilities.
+
+Current features are:
+
+  - application locking (start only one instance)
+  - exithook (write log after crash, etc)
+  - logging
+  - module loading
+
+Current utilities are:
+
+  - Config (useful for loading setting-files, like Properites)
+  - Version (comparing module versions)
+  - easy text file reading and value parsing
+  - some other
+
+# Note #
+
+Version 0.10.0 was developed for a specific project and will not supported. As of version 0.11.0 Dval will be feature-complete.
