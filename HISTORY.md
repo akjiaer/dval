@@ -1,5 +1,8 @@
-0.11.0 (Grevyi)
+History of Dval
 ===============
+
+0.11.0 (Grevyi)
+---------------
 *2011-??-??*
 
 * added command line parser #
@@ -10,7 +13,8 @@
 
 *# - not implemented yet*
 
-== 0.10.0 (Kiang) ==
+0.10.0 (Kiang)
+--------------
 *2011-04-07*
 
 * first release
